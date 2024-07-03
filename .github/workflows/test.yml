@@ -1,0 +1,38 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+       - name: Checkout code
+         uses: actions/checkout@v4
+       - name: Test
+         id: test
+         uses: ./
+         with:
+           commit_message: |
+               Use external action
+
+               Run-GHA: true
+               Skip-PR-comments: true
+               Test-tag: always_passes,vm
+
+               Required-githooks: true
+
+               Signed-off-by: Brian J. Murrell <brian.murrell@intel.com>
+           pragma: TEST_TAG
+           default: foobar
+       - name: Test value
+         run: |
+              set -eux
+              if [ '${{ steps.test.outputs.value }}' != 'always_passes,vm' ]; then
+                  echo "Value is not 'always_passes,vm'"
+                  exit 1
+              fi
