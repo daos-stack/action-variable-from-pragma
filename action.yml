@@ -1,12 +1,37 @@
-name: '…'
-description: '…'
-#inputs:
-#  <name>:
-#    description: '…'
-#    required: true
+name: 'Set Variable from Commit Pragma'
+description: 'Set Variable from Commit Pragma'
+inputs:
+  commit-message:
+    description: Dequoted commit message
+    required: true
+  pragma:
+    description: Pragma to make a variable from
+    required: true
+  default:
+    description: Default value if pragma is not found
+    required: false
+outputs:
+  value:
+    description: The value of the pragma
+    value: ${{ steps.value.outputs.value }}
+
 runs:
   using: "composite"
   steps:
-    - run: |
-        echo "…"
+    # checkout the common library
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        repository: daos-stack/actions-lib
+        ref: v1
+        path: actions-lib
+    - name: Create Variable
+      id: value
       shell: bash
+      run: |
+           set -eu
+           # using user input (the commit message) in an eval can be pretty dangerous
+           # but actions-lib/get_commit_pragmas does a good job of sanitizing it
+           eval $(echo '${{ inputs.commit-message }}' | actions-lib/get_commit_pragmas)
+           echo "value=${${{ inputs.pragma }}:-${{ inputs.default }}}" >> $GITHUB_OUTPUT
+           cat "$GITHUB_OUTPUT"
